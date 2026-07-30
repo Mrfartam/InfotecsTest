@@ -16,6 +16,6 @@ public class ValueDTO: ClassMap<ValueData>
                 DateTimeStyles.AdjustToUniversal
             );
         Map(m => m.ExecutionTime).Name("ExecutionTime");
-        Map(m => m.Value).Name("ValueData");
+        Map(m => m.Value).Name("Value");
     }
 }

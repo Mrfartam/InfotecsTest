@@ -1,6 +1,7 @@
 using InfotecsTest.DBInfrastructure;
 using InfotecsTest.Services;
 using InfotecsTest.Services.Interfaces;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -9,6 +10,11 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 
 builder.Services.AddDbContext<InfotecsTestDBContext>(options =>
     options.UseNpgsql(connectionString));
+
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.SuppressModelStateInvalidFilter = true;
+});
 
 builder.Services.AddControllers();
 

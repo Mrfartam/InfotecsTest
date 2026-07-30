@@ -5,6 +5,7 @@ using InfotecsTest.Models;
 using InfotecsTest.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
+using System.Net.Sockets;
 
 namespace InfotecsTest.Services;
 
@@ -33,10 +34,7 @@ public class InfotecsTestService: IInfotecsTestService
             using var reader = new StreamReader(stream);
             using var csv = new CsvHelper.CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture)
             {
-                Delimiter = ";",
-                HasHeaderRecord = true,
-                HeaderValidated = null,
-                MissingFieldFound = null
+                Delimiter = ";"
             });
 
             csv.Context.RegisterClassMap<ValueDTO>();
@@ -57,7 +55,9 @@ public class InfotecsTestService: IInfotecsTestService
             if (records.Count < 1 || records.Count > 10000)
                 return new CVSUploadResultDTO { IsSuccess = false, ErrorMessage = "Количество строк должно быть от 1 до 10000." };
 
-            await _context.Values.AddRangeAsync(records);
+            await _context.Values.Where(v => v.Name == file.FileName).ExecuteDeleteAsync();
+
+            _context.Values.AddRange(records);
             await _context.SaveChangesAsync();
             await CalculateIntegralResultsAsync(records);
 
@@ -65,7 +65,15 @@ public class InfotecsTestService: IInfotecsTestService
         }
         catch (Exception ex)
         {
-            return new CVSUploadResultDTO { IsSuccess = false, ErrorMessage = $"Ошибка при обработке файла: {ex.Message}" };
+            switch (ex)
+            {
+                case InvalidOperationException:
+                    return new CVSUploadResultDTO { IsSuccess = false, ErrorMessage = "Не удалось подключиться к базе данных." };
+                case CsvHelper.TypeConversion.TypeConverterException:
+                    return new CVSUploadResultDTO { IsSuccess = false, ErrorMessage = "Значения должны соответствовать своим типам, отсутствие одного из значений в записи недопустимо." };
+                default:
+                    return new CVSUploadResultDTO { IsSuccess = false, ErrorMessage = $"Ошибка при обработке файла: {ex.Message}" };
+            }
         }
     }
     public async Task CalculateIntegralResultsAsync(List<ValueData> records)
@@ -75,13 +83,19 @@ public class InfotecsTestService: IInfotecsTestService
             Name = records.First().Name,
             deltaDate = (int)(records.Max(r => r.Date) - records.Min(r => r.Date)).TotalSeconds,
             minDateTime = records.Min(r => r.Date),
-            AverageExecutionTime = (decimal)records.Average(r => r.ExecutionTime),
+            AverageExecutionTime = records.Average(r => r.ExecutionTime),
             AverageValue = records.Average(r => r.Value),
             MedianValue = records.OrderBy(r => r.Value).ElementAt(records.Count / 2).Value,
             MinValue = records.Min(r => r.Value),
             MaxValue = records.Max(r => r.Value)
         };
-        await _context.Results.AddAsync(result);
+
+        var existingResult = await _context.Results.FirstOrDefaultAsync(r => r.Name == result.Name);
+        if (existingResult != null)
+            _context.Entry(existingResult).CurrentValues.SetValues(result);
+        else
+            _context.Results.Add(result);
+
         await _context.SaveChangesAsync();
     }
     public async Task<List<Result>> GetResultsByFiltersAsync(ResultFilterDTO filters)
