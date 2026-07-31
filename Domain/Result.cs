@@ -10,9 +10,9 @@ public class Result
     public string Name { get; set; } = string.Empty;
     public int deltaDate { get; set; }
     public DateTime minDateTime { get; set; }
-    public decimal AverageExecutionTime { get; set; }
-    public decimal AverageValue { get; set; }
-    public decimal MedianValue { get; set; }
-    public decimal MinValue { get; set; }
-    public decimal MaxValue { get; set; }
+    public double AverageExecutionTime { get; set; }
+    public double AverageValue { get; set; }
+    public double MedianValue { get; set; }
+    public double MinValue { get; set; }
+    public double MaxValue { get; set; }
 }
