@@ -81,8 +81,8 @@ public class InfotecsTestService: IInfotecsTestService
         var result = new Result
         {
             Name = records.First().Name,
-            deltaDate = (int)(records.Max(r => r.Date) - records.Min(r => r.Date)).TotalSeconds,
-            minDateTime = records.Min(r => r.Date),
+            DeltaDate = (int)(records.Max(r => r.Date) - records.Min(r => r.Date)).TotalSeconds,
+            StartDateTime = records.Min(r => r.Date),
             AverageExecutionTime = records.Average(r => r.ExecutionTime),
             AverageValue = records.Average(r => r.Value),
             MedianValue = records.OrderBy(r => r.Value).ElementAt(records.Count / 2).Value,
@@ -103,11 +103,11 @@ public class InfotecsTestService: IInfotecsTestService
         var query = _context.Results.AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(filters.FileName))
-            query = query.Where(r => r.Name.Contains(filters.FileName));
-        if (filters.MinFirstRecordTime.HasValue)
-            query = query.Where(r => r.minDateTime >= filters.MinFirstRecordTime.Value);
-        if (filters.MaxFirstRecordTime.HasValue)
-            query = query.Where(r => r.minDateTime <= filters.MaxFirstRecordTime.Value);
+            query = query.Where(r => r.Name == filters.FileName);
+        if (filters.MinStartDateTime.HasValue)
+            query = query.Where(r => r.StartDateTime >= filters.MinStartDateTime.Value);
+        if (filters.MaxStartDateTime.HasValue)
+            query = query.Where(r => r.StartDateTime <= filters.MaxStartDateTime.Value);
         if (filters.MinAverageValue.HasValue)
             query = query.Where(r => r.AverageValue >= filters.MinAverageValue.Value);
         if (filters.MaxAverageValue.HasValue)

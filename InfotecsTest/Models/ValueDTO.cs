@@ -10,7 +10,7 @@ public class ValueDTO: ClassMap<ValueData>
     {
         Map(m => m.Date)
             .Name("Date")
-            .TypeConverterOption.Format("yyyy-MM-ddTHH-mm-ss.fffZ")
+            .TypeConverterOption.Format("yyyy-MM-ddTHH-mm-ss.FFFFZ")
             .TypeConverterOption.DateTimeStyles(
                 DateTimeStyles.AssumeUniversal |
                 DateTimeStyles.AdjustToUniversal

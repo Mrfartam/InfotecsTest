@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace InfotecsTest.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class NewMirgationCircle : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -17,13 +17,13 @@ namespace InfotecsTest.Migrations
                 columns: table => new
                 {
                     Name = table.Column<string>(type: "text", nullable: false),
-                    deltaDate = table.Column<int>(type: "integer", nullable: false),
-                    minDateTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    AverageExecutionTime = table.Column<decimal>(type: "numeric", nullable: false),
-                    AverageValue = table.Column<decimal>(type: "numeric", nullable: false),
-                    MedianValue = table.Column<decimal>(type: "numeric", nullable: false),
-                    MinValue = table.Column<decimal>(type: "numeric", nullable: false),
-                    MaxValue = table.Column<decimal>(type: "numeric", nullable: false)
+                    DeltaDate = table.Column<int>(type: "integer", nullable: false),
+                    StartDateTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    AverageExecutionTime = table.Column<double>(type: "double precision", nullable: false),
+                    AverageValue = table.Column<double>(type: "double precision", nullable: false),
+                    MedianValue = table.Column<double>(type: "double precision", nullable: false),
+                    MinValue = table.Column<double>(type: "double precision", nullable: false),
+                    MaxValue = table.Column<double>(type: "double precision", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -38,8 +38,8 @@ namespace InfotecsTest.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Name = table.Column<string>(type: "text", nullable: false),
                     Date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ExecutionTime = table.Column<decimal>(type: "numeric", nullable: false),
-                    Value = table.Column<decimal>(type: "numeric", nullable: false)
+                    ExecutionTime = table.Column<double>(type: "double precision", nullable: false),
+                    Value = table.Column<double>(type: "double precision", nullable: false)
                 },
                 constraints: table =>
                 {

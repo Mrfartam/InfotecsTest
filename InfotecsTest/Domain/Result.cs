@@ -8,8 +8,8 @@ public class Result
     [Key]
     [ForeignKey("ValueData")]
     public string Name { get; set; } = string.Empty;
-    public int deltaDate { get; set; }
-    public DateTime minDateTime { get; set; }
+    public int DeltaDate { get; set; }
+    public DateTime StartDateTime { get; set; }
     public double AverageExecutionTime { get; set; }
     public double AverageValue { get; set; }
     public double MedianValue { get; set; }

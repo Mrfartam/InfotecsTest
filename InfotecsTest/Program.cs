@@ -23,6 +23,18 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddScoped<IInfotecsTestService, InfotecsTestService>();
 
+builder.Services.AddDbContext<InfotecsTestDBContext>(options =>
+{
+    if (builder.Environment.IsEnvironment("Testing"))
+    {
+        options.UseInMemoryDatabase($"TestDb_{Guid.NewGuid()}");
+    }
+    else
+    {
+        options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
+    }
+});
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())

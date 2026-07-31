@@ -27,25 +27,25 @@ namespace InfotecsTest.Migrations
                     b.Property<string>("Name")
                         .HasColumnType("text");
 
-                    b.Property<decimal>("AverageExecutionTime")
-                        .HasColumnType("numeric");
+                    b.Property<double>("AverageExecutionTime")
+                        .HasColumnType("double precision");
 
-                    b.Property<decimal>("AverageValue")
-                        .HasColumnType("numeric");
+                    b.Property<double>("AverageValue")
+                        .HasColumnType("double precision");
 
-                    b.Property<decimal>("MaxValue")
-                        .HasColumnType("numeric");
-
-                    b.Property<decimal>("MedianValue")
-                        .HasColumnType("numeric");
-
-                    b.Property<decimal>("MinValue")
-                        .HasColumnType("numeric");
-
-                    b.Property<int>("deltaDate")
+                    b.Property<int>("DeltaDate")
                         .HasColumnType("integer");
 
-                    b.Property<DateTime>("minDateTime")
+                    b.Property<double>("MaxValue")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("MedianValue")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("MinValue")
+                        .HasColumnType("double precision");
+
+                    b.Property<DateTime>("StartDateTime")
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Name");
@@ -64,15 +64,15 @@ namespace InfotecsTest.Migrations
                     b.Property<DateTime>("Date")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<decimal>("ExecutionTime")
-                        .HasColumnType("numeric");
+                    b.Property<double>("ExecutionTime")
+                        .HasColumnType("double precision");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<decimal>("Value")
-                        .HasColumnType("numeric");
+                    b.Property<double>("Value")
+                        .HasColumnType("double precision");
 
                     b.HasKey("Id");
 
