@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  # База данных PosgreSQL
+  postgres-db:
+    image: postgres:15-alpine
+    container_name: infotect_test_posgres_db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: MyVeryStrongPasswordAsInPasswordGameByNealFun
+      POSTGRES_DB: InfotecsTestDB
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+  
+  # WebAPI Backend
+  backend:
+    build:
+      context: ./InfotecsTest
+      dockerfile: Dockerfile
+    container_name: infotecs_test_backend
+    restart: always
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres-db;Database=InfotecsTestDB;Username=postgres;Password=MyVeryStrongPasswordAsInPasswordGameByNealFun
+    ports:
+      - "7223:8080"
+    depends_on:
+      - postgres-db
+  
+  # Angular SPA Frontend
+  frontend:
+    build:
+      context: ./InfotecsTestFrontend
+      dockerfile: Dockerfile
+    container_name: infotecs_test_frontend
+    restart: always
+    ports:
+      - "4200:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:

@@ -35,6 +35,16 @@ builder.Services.AddDbContext<InfotecsTestDBContext>(options =>
     }
 });
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAngular", policy =>
+    {
+        policy.WithOrigins("http://localhost:4200")
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -43,6 +53,13 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<InfotecsTestDBContext>();
+    dbContext.Database.Migrate();
+}
+
+app.UseCors("AllowAngular");
 app.MapControllers();
 
 app.Run();

@@ -105,9 +105,9 @@ public class InfotecsTestService: IInfotecsTestService
         if (!string.IsNullOrWhiteSpace(filters.FileName))
             query = query.Where(r => r.Name == filters.FileName);
         if (filters.MinStartDateTime.HasValue)
-            query = query.Where(r => r.StartDateTime >= filters.MinStartDateTime.Value);
+            query = query.Where(r => r.StartDateTime >= filters.MinStartDateTime);
         if (filters.MaxStartDateTime.HasValue)
-            query = query.Where(r => r.StartDateTime <= filters.MaxStartDateTime.Value);
+            query = query.Where(r => r.StartDateTime <= filters.MaxStartDateTime);
         if (filters.MinAverageValue.HasValue)
             query = query.Where(r => r.AverageValue >= filters.MinAverageValue.Value);
         if (filters.MaxAverageValue.HasValue)

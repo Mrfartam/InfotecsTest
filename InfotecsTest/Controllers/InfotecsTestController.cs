@@ -19,8 +19,8 @@ public class InfotecsTestController: ControllerBase
     {
         var result = await _infotecsTestService.ProcessAndSaveFileAsync(file);
         if (!result.IsSuccess)
-            return BadRequest(result.ErrorMessage);
-        return Ok(result.ErrorMessage);
+            return BadRequest(new { message = result.ErrorMessage });
+        return Ok(new { message = result.ErrorMessage });
     }
 
     [HttpGet("results")]
