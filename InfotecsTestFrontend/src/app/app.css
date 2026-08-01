@@ -297,7 +297,7 @@ input:focus {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  min-width: 0; /* Предотвращает переполнение flex/grid элементов */
+  min-width: 0;
 }
 
   .filter-group label {
@@ -326,5 +326,5 @@ input[type="datetime-local"] {
 
   .range-inputs input {
     flex: 1;
-    min-width: 0; /* Дает инпуту даты нормально сжиматься внутри flex */
+    min-width: 0;
   }
