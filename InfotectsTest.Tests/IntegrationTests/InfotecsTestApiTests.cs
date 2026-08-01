@@ -1,15 +1,22 @@
-﻿using System.Net;
+﻿using InfotecsTest.DBInfrastructure;
+using InfotecsTest.Domain;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
+using System.Text.Json;
 
 namespace InfotecsTest.Tests.IntegrationTests;
 public class InfotecsTestApiTests : IClassFixture<TestApiFactory>
 {
     private readonly HttpClient _client;
+    private readonly TestApiFactory _factory;
 
     public InfotecsTestApiTests(TestApiFactory factory)
     {
         _client = factory.CreateClient();
+        _factory = factory;
     }
 
     // Вспомогательный метод отправки CSV как IFormFile
@@ -30,7 +37,7 @@ public class InfotecsTestApiTests : IClassFixture<TestApiFactory>
     /// </summary>
     // Тест на успешную загрузку CSV файла
     [Fact]
-    public async Task UploadFile_ValidFile_Returns200Ok()
+    public async Task UploadFile_ValidFile_SavesDataToDb()
     {
         string csv = "Date;ExecutionTime;Value\n2020-01-01T12-00-00.0000Z;100;20.0\n";
         var httpContent = CreateCsvHttpContent(csv, "api_test.csv");
@@ -38,6 +45,15 @@ public class InfotecsTestApiTests : IClassFixture<TestApiFactory>
         var response = await _client.PostAsync("/api/upload", httpContent, TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        using var scope = _factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<InfotecsTestDBContext>();
+
+        var entityInDb = await dbContext.Values.FirstOrDefaultAsync(x => x.Name == "api_test.csv", cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.NotNull(entityInDb);
+        Assert.Equal(20.0, entityInDb.Value);
+        Assert.Equal(100, entityInDb.ExecutionTime);
     }
 
     // Тест на загрузку CSV файла с неверным форматом (не CSV)
@@ -56,13 +72,64 @@ public class InfotecsTestApiTests : IClassFixture<TestApiFactory>
     /// <summary>
     /// Тест GET /api/results
     /// </summary>
-    // Тест на получение результатов с фильтром
+    // Тест на получение результатов без фильтрации
     [Fact]
-    public async Task GetResults_WithFilter_Returns200Ok()
+    public async Task GetResults_WithoutFilter_Returns200Ok()
     {
         var response = await _client.GetAsync("/api/results", TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    // Тест на получение результатов с фильтром по имени файла
+    [Fact]
+    public async Task GetResults_WithFilterByName_ReturnsExpectedData()
+    {
+        string csv = "Date;ExecutionTime;Value\n2020-01-01T12-00-00.0000Z;100;20.0\n2020-01-01T13-00-00.0000Z;200;40.0\n";
+        var httpContent = CreateCsvHttpContent(csv, "api_test.csv");
+
+        var uploadResponse = await _client.PostAsync("/api/upload", httpContent, TestContext.Current.CancellationToken);
+        Assert.Equal(HttpStatusCode.OK, uploadResponse.StatusCode);
+
+        var queryParams = "?FileName=api_test.csv";
+        var response = await _client.GetAsync($"/api/results{queryParams}", TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var jsonString = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var results = JsonSerializer.Deserialize<List<Result>>(jsonString, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        });
+
+        Assert.NotNull(results);
+        Assert.Single(results);
+        Assert.Equal("api_test.csv", results[0].Name);
+    }
+
+    // Тест на получение результатов с фильтром по минимальному среднему значению, когда данных нет
+    [Fact]
+    public async Task GetResults_WithFilterByMinAverageValueWithoutNeededData_ReturnsEmptyData()
+    {
+        string csv = "Date;ExecutionTime;Value\n2020-01-01T12-00-00.0000Z;100;20.0\n2020-01-01T13-00-00.0000Z;200;40.0\n";
+        var httpContent = CreateCsvHttpContent(csv, "api_test.csv");
+
+        var uploadResponse = await _client.PostAsync("/api/upload", httpContent, TestContext.Current.CancellationToken);
+        Assert.Equal(HttpStatusCode.OK, uploadResponse.StatusCode);
+
+        var queryParams = "?MinAverageValue=50.0";
+        var response = await _client.GetAsync($"/api/results{queryParams}", TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var jsonString = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var results = JsonSerializer.Deserialize<List<Result>>(jsonString, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        });
+
+        Assert.NotNull(results);
+        Assert.Empty(results);
     }
 
     /// <summary>
@@ -70,7 +137,7 @@ public class InfotecsTestApiTests : IClassFixture<TestApiFactory>
     /// </summary>
     // Тест на получение последних 10 значений по имени файла
     [Fact]
-    public async Task GetLast10Values_ValidFilename_Returns200Ok()
+    public async Task GetLast10Values_ValidFilename_ReturnsExpectedData()
     {
         string csv = "Date;ExecutionTime;Value\n2020-01-01T12-00-00.0000Z;100;20.0\n";
         var httpContent = CreateCsvHttpContent(csv, "api_test.csv");
@@ -78,13 +145,20 @@ public class InfotecsTestApiTests : IClassFixture<TestApiFactory>
         await _client.PostAsync("/api/upload", httpContent, TestContext.Current.CancellationToken);
         var response = await _client.GetAsync("/api/last10values?filename=api_test.csv", TestContext.Current.CancellationToken);
 
-        //Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        if (response.StatusCode != HttpStatusCode.OK)
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var jsonString = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        var resultList = JsonSerializer.Deserialize<List<ValueData>>(jsonString, new JsonSerializerOptions
         {
-            var errorContent = await response.Content.ReadAsStringAsync();
-            // Это выведет текст исключения и стек в вывод теста
-            Assert.Fail($"Сервер вернул status {response.StatusCode}. Ответ сервера: {errorContent}");
-        }
+            PropertyNameCaseInsensitive = true
+        });
+
+        Assert.NotNull(resultList);
+        Assert.Single(resultList);
+        Assert.Equal("api_test.csv", resultList[0].Name);
+        Assert.Equal(20.0, resultList[0].Value);
+        Assert.Equal(100, resultList[0].ExecutionTime);
     }
 
     // Тест на получение последних 10 значений с пустым именем файла
